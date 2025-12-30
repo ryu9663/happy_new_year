@@ -229,7 +229,7 @@
         <div class="card" id="editor">
           <div class="sparkle"></div>
           <h1>Happy New Year ✨</h1>
-          <p class="hint">메시지 입력 → 링크 생성 → 공유 (서버 없음)</p>
+          <p class="hint">메시지 입력 → 링크 생성 → 공유</p>
 
           <label>To</label>
           <input id="to" placeholder="김말이" maxlength="40" />
@@ -275,17 +275,20 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <script>
-      // ---------- base64url helpers ----------
-      const toB64Url = (str) =>
-        btoa(unescape(encodeURIComponent(str)))
+      // ---------- base64url helpers with compression ----------
+      const toCompressedUrl = (str) => {
+        const compressed = LZString.compressToBase64(str);
+        return compressed
           .replace(/\+/g, "-")
           .replace(/\//g, "_")
           .replace(/=+$/, "");
-      const fromB64Url = (b64url) => {
-        const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+      };
+      const fromCompressedUrl = (compressed) => {
+        const b64 = compressed.replace(/-/g, "+").replace(/_/g, "/");
         const pad = b64 + "===".slice((b64.length + 3) % 4);
-        return decodeURIComponent(escape(atob(pad)));
+        return LZString.decompressFromBase64(pad);
       };
 
       const els = {
@@ -356,7 +359,7 @@
           f: els.from.value.trim().slice(0, 40),
           th: els.theme.value,
         };
-        const encoded = toB64Url(JSON.stringify(payload));
+        const encoded = toCompressedUrl(JSON.stringify(payload));
         const url = location.origin + location.pathname + "#" + encoded;
         els.link.textContent = url;
         return url;
@@ -371,7 +374,7 @@
         const hash = location.hash.replace(/^#/, "");
         if (!hash) return false;
         try {
-          const obj = JSON.parse(fromB64Url(hash));
+          const obj = JSON.parse(fromCompressedUrl(hash));
           els.to.value = obj.t || "";
           els.message.value = obj.m || "";
           els.from.value = obj.f || "";
