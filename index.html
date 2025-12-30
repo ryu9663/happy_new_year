@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Happy New Year Card</title>
+    <style>
+      :root {
+        --bg1: #0f172a;
+        --bg2: #1f2937;
+        --accent: #fbbf24;
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+        color: var(--text);
+        background: radial-gradient(
+            800px 500px at 20% 20%,
+            rgba(251, 191, 36, 0.25),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 600px at 80% 30%,
+            rgba(56, 189, 248, 0.18),
+            transparent 55%
+          ),
+          linear-gradient(135deg, var(--bg1), var(--bg2));
+        padding: 24px;
+        overflow-x: hidden;
+      }
+
+      /* Snow canvas */
+      #snow {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      .wrap {
+        width: min(980px, 100%);
+        display: grid;
+        gap: 16px;
+        z-index: 10;
+      }
+      .card {
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 24px;
+        padding: 28px 24px;
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+      }
+      .sparkle {
+        position: absolute;
+        inset: -40px;
+        background: radial-gradient(
+            circle at 20% 30%,
+            rgba(255, 255, 255, 0.18),
+            transparent 35%
+          ),
+          radial-gradient(
+            circle at 70% 60%,
+            rgba(255, 255, 255, 0.12),
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 40% 80%,
+            rgba(251, 191, 36, 0.1),
+            transparent 45%
+          );
+        filter: blur(2px);
+        pointer-events: none;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(24px, 3.8vw, 40px);
+        letter-spacing: -0.02em;
+      }
+      .msg {
+        margin: 0;
+        font-size: clamp(16px, 2.3vw, 20px);
+        line-height: 1.65;
+        white-space: pre-wrap;
+        color: var(--muted);
+      }
+      .sig {
+        margin-top: 18px;
+        font-weight: 800;
+        color: var(--text);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      @media (min-width: 860px) {
+        .row {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      textarea,
+      input,
+      select {
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.18);
+        color: var(--text);
+        padding: 12px 12px;
+        outline: none;
+      }
+      textarea {
+        min-height: 140px;
+        resize: vertical;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.72);
+        margin: 6px 0;
+      }
+      .btns {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      button {
+        border: 0;
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: rgba(251, 191, 36, 0.95);
+        color: #111827;
+        font-weight: 900;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: rgba(255, 255, 255, 0.12);
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-weight: 800;
+      }
+      .hint {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.65);
+      }
+      .linkbox {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.82);
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        padding: 12px;
+        word-break: break-all;
+      }
+
+      /* Share view mode (when hash exists) */
+      body.share {
+        padding: 0;
+        place-items: stretch;
+      }
+      body.share .wrap {
+        width: 100%;
+        min-height: 100vh;
+        padding: 24px;
+        display: grid;
+        place-items: center;
+      }
+      body.share #editor {
+        display: none;
+      }
+      body.share .row {
+        grid-template-columns: 1fr;
+      }
+      body.share #preview.card {
+        width: min(920px, calc(100% - 32px));
+        padding: 34px 26px;
+      }
+      .shareFooter {
+        display: none;
+        margin-top: 14px;
+        width: min(920px, calc(100% - 32px));
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+      body.share .shareFooter {
+        display: flex;
+      }
+      a.makeMine {
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.12);
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        font-weight: 900;
+        backdrop-filter: blur(10px);
+      }
+      a.makeMine:hover {
+        background: rgba(255, 255, 255, 0.18);
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="snow"></canvas>
+
+    <div class="wrap">
+      <div class="row">
+        <div class="card" id="editor">
+          <div class="sparkle"></div>
+          <h1>Happy New Year ✨</h1>
+          <p class="hint">메시지 입력 → 링크 생성 → 공유 (서버 없음)</p>
+
+          <label>To</label>
+          <input id="to" placeholder="예: 준열아" maxlength="40" />
+
+          <label>Message</label>
+          <textarea
+            id="message"
+            placeholder="예: 2026년에도 건강하고 좋은 일만 가득하길!&#10;항상 고마워 :)"
+          ></textarea>
+
+          <label>From</label>
+          <input id="from" placeholder="예: 류준열" maxlength="40" />
+
+          <label>Theme</label>
+          <select id="theme">
+            <option value="night">Night Glow</option>
+            <option value="dawn">Soft Dawn</option>
+            <option value="mint">Mint Pop</option>
+          </select>
+
+          <div class="btns" style="margin-top: 12px">
+            <button id="make">공유 링크 만들기</button>
+            <button class="secondary" id="copy">링크 복사</button>
+            <button class="secondary" id="reset">초기화</button>
+          </div>
+
+          <div style="margin-top: 12px">
+            <div class="hint">공유 링크</div>
+            <div class="linkbox" id="link">(아직 없음)</div>
+          </div>
+        </div>
+
+        <div class="card" id="preview">
+          <div class="sparkle"></div>
+          <h1 id="pvTitle">Happy New Year ✨</h1>
+          <p class="msg" id="pvMsg">메시지를 입력하면 여기서 미리보기 돼.</p>
+          <div class="sig" id="pvSig"></div>
+        </div>
+      </div>
+
+      <div class="shareFooter">
+        <a class="makeMine" id="makeMine" href="#">내 카드 만들기</a>
+      </div>
+    </div>
+
+    <script>
+      // ---------- base64url helpers ----------
+      const toB64Url = (str) =>
+        btoa(unescape(encodeURIComponent(str)))
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+      const fromB64Url = (b64url) => {
+        const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+        const pad = b64 + "===".slice((b64.length + 3) % 4);
+        return decodeURIComponent(escape(atob(pad)));
+      };
+
+      const els = {
+        to: document.getElementById("to"),
+        message: document.getElementById("message"),
+        from: document.getElementById("from"),
+        theme: document.getElementById("theme"),
+        make: document.getElementById("make"),
+        copy: document.getElementById("copy"),
+        reset: document.getElementById("reset"),
+        link: document.getElementById("link"),
+        pvTitle: document.getElementById("pvTitle"),
+        pvMsg: document.getElementById("pvMsg"),
+        pvSig: document.getElementById("pvSig"),
+        makeMine: document.getElementById("makeMine"),
+      };
+
+      const themes = {
+        night: {
+          bg1: "#0f172a",
+          bg2: "#1f2937",
+          accent: "#fbbf24",
+          text: "#f8fafc",
+          muted: "#cbd5e1",
+        },
+        dawn: {
+          bg1: "#111827",
+          bg2: "#312e81",
+          accent: "#f472b6",
+          text: "#f8fafc",
+          muted: "#e5e7eb",
+        },
+        mint: {
+          bg1: "#042f2e",
+          bg2: "#0f766e",
+          accent: "#34d399",
+          text: "#ecfeff",
+          muted: "#a7f3d0",
+        },
+      };
+
+      function applyTheme(key) {
+        const t = themes[key] || themes.night;
+        document.documentElement.style.setProperty("--bg1", t.bg1);
+        document.documentElement.style.setProperty("--bg2", t.bg2);
+        document.documentElement.style.setProperty("--accent", t.accent);
+        document.documentElement.style.setProperty("--text", t.text);
+        document.documentElement.style.setProperty("--muted", t.muted);
+      }
+
+      function renderPreview() {
+        const to = els.to.value.trim();
+        const msg = els.message.value.trim();
+        const from = els.from.value.trim();
+
+        els.pvTitle.textContent = to
+          ? `Happy New Year, ${to} ✨`
+          : `Happy New Year ✨`;
+        els.pvMsg.textContent = msg || "메시지를 입력해줘.";
+        els.pvSig.textContent = from ? `— ${from}` : "";
+        applyTheme(els.theme.value);
+      }
+
+      function makeLink() {
+        const payload = {
+          t: els.to.value.trim().slice(0, 40),
+          m: els.message.value.trim().slice(0, 700),
+          f: els.from.value.trim().slice(0, 40),
+          th: els.theme.value,
+        };
+        const encoded = toB64Url(JSON.stringify(payload));
+        const url = location.origin + location.pathname + "#" + encoded;
+        els.link.textContent = url;
+        return url;
+      }
+
+      function enterShareMode() {
+        document.body.classList.add("share");
+        els.makeMine.href = location.origin + location.pathname; // 해시 없는 기본 페이지
+      }
+
+      function loadFromHash() {
+        const hash = location.hash.replace(/^#/, "");
+        if (!hash) return false;
+        try {
+          const obj = JSON.parse(fromB64Url(hash));
+          els.to.value = obj.t || "";
+          els.message.value = obj.m || "";
+          els.from.value = obj.f || "";
+          els.theme.value = obj.th || "night";
+          renderPreview();
+          enterShareMode();
+          return true;
+        } catch (e) {
+          // 해시가 깨졌으면 공유모드로 안 들어감
+          return false;
+        }
+      }
+
+      // Events
+      ["input", "change"].forEach((evt) => {
+        els.to.addEventListener(evt, renderPreview);
+        els.message.addEventListener(evt, renderPreview);
+        els.from.addEventListener(evt, renderPreview);
+        els.theme.addEventListener(evt, renderPreview);
+      });
+
+      els.make.addEventListener("click", () => {
+        makeLink();
+      });
+
+      els.copy.addEventListener("click", async () => {
+        const url =
+          els.link.textContent && els.link.textContent !== "(아직 없음)"
+            ? els.link.textContent
+            : makeLink();
+        try {
+          await navigator.clipboard.writeText(url);
+          els.link.textContent = url + " ✅ 복사됨";
+        } catch {
+          els.link.textContent = url + " (복사 실패: 수동 복사)";
+        }
+      });
+
+      els.reset.addEventListener("click", () => {
+        history.replaceState(null, "", location.pathname);
+        document.body.classList.remove("share");
+        els.to.value = "";
+        els.message.value = "";
+        els.from.value = "";
+        els.theme.value = "night";
+        els.link.textContent = "(아직 없음)";
+        renderPreview();
+      });
+
+      // If user edits after hash load (share mode), keep share mode unless they reset
+      window.addEventListener("hashchange", () => {
+        // 새 공유 링크로 들어온 경우 대응
+        if (loadFromHash()) return;
+        // 해시가 지워지면 편집 모드로 복귀
+        document.body.classList.remove("share");
+      });
+
+      // init
+      if (!loadFromHash()) renderPreview();
+
+      // ---------- Snow (canvas particles) ----------
+      const canvas = document.getElementById("snow");
+      const ctx = canvas.getContext("2d");
+
+      let W = 0,
+        H = 0,
+        DPR = 1;
+      let flakes = [];
+      let rafId = 0;
+
+      function resizeSnow() {
+        DPR = Math.min(2, window.devicePixelRatio || 1);
+        W = Math.floor(window.innerWidth);
+        H = Math.floor(window.innerHeight);
+        canvas.width = Math.floor(W * DPR);
+        canvas.height = Math.floor(H * DPR);
+        canvas.style.width = W + "px";
+        canvas.style.height = H + "px";
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+        // density: keep it reasonable
+        const base = document.body.classList.contains("share") ? 140 : 110;
+        const target = Math.floor((W * H) / 12000) + base; // adaptive
+        const next = [];
+        for (let i = 0; i < target; i++) {
+          next.push(makeFlake(true));
+        }
+        flakes = next;
+      }
+
+      function rand(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function makeFlake(randomY = false) {
+        const r = rand(1.0, 3.2);
+        return {
+          x: rand(0, W),
+          y: randomY ? rand(0, H) : rand(-H, 0),
+          r,
+          vy: rand(0.6, 1.9) + r * 0.15,
+          vx: rand(-0.35, 0.35),
+          drift: rand(0.002, 0.008),
+          phase: rand(0, Math.PI * 2),
+          alpha: rand(0.35, 0.9),
+        };
+      }
+
+      function step() {
+        ctx.clearRect(0, 0, W, H);
+
+        ctx.beginPath();
+        for (const f of flakes) {
+          f.phase += f.drift;
+          f.x += f.vx + Math.sin(f.phase) * 0.35;
+          f.y += f.vy;
+
+          if (f.y > H + 10) {
+            f.y = rand(-60, -10);
+            f.x = rand(0, W);
+          }
+          if (f.x < -10) f.x = W + 10;
+          if (f.x > W + 10) f.x = -10;
+
+          // draw
+          ctx.moveTo(f.x + f.r, f.y);
+          // per-flake alpha (cheap enough)
+          ctx.fillStyle = `rgba(255,255,255,${f.alpha})`;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        rafId = requestAnimationFrame(step);
+      }
+
+      function startSnow() {
+        if (rafId) cancelAnimationFrame(rafId);
+        resizeSnow();
+        step();
+      }
+
+      window.addEventListener("resize", () => resizeSnow(), { passive: true });
+
+      // start
+      startSnow();
+    </script>
+  </body>
+</html>
