@@ -353,13 +353,30 @@
       }
 
       function makeLink() {
-        const payload = {
-          t: els.to.value.trim().slice(0, 40),
-          m: els.message.value.trim().slice(0, 700),
-          f: els.from.value.trim().slice(0, 40),
-          th: els.theme.value,
-        };
-        const encoded = toCompressedUrl(JSON.stringify(payload));
+        const to = els.to.value.trim().slice(0, 40);
+        const msg = els.message.value.trim().slice(0, 700);
+        const from = els.from.value.trim().slice(0, 40);
+        const theme = els.theme.value;
+        
+        // 배열 형태로 더 압축: [to, msg, from, theme번호]
+        const data = [];
+        if (to || msg || from || theme !== 'night') {
+          data[0] = to || '';
+          data[1] = msg || '';
+          data[2] = from || '';
+          if (theme !== 'night') {
+            data[3] = theme === 'dawn' ? 1 : 2;
+          }
+        }
+        
+        // 빈 배열이면 기본 페이지
+        if (data.length === 0) {
+          const url = location.origin + location.pathname;
+          els.link.textContent = url;
+          return url;
+        }
+        
+        const encoded = toCompressedUrl(JSON.stringify(data));
         const url = location.origin + location.pathname + "#" + encoded;
         els.link.textContent = url;
         return url;
@@ -373,12 +390,26 @@
       function loadFromHash() {
         const hash = location.hash.replace(/^#/, "");
         if (!hash) return false;
+        
         try {
-          const obj = JSON.parse(fromCompressedUrl(hash));
-          els.to.value = obj.t || "";
-          els.message.value = obj.m || "";
-          els.from.value = obj.f || "";
-          els.theme.value = obj.th || "night";
+          const data = JSON.parse(fromCompressedUrl(hash));
+          
+          // 배열 형태 처리: [to, msg, from, theme번호]
+          if (Array.isArray(data)) {
+            els.to.value = data[0] || "";
+            els.message.value = data[1] || "";
+            els.from.value = data[2] || "";
+            els.theme.value = data[3] === 1 ? 'dawn' : data[3] === 2 ? 'mint' : 'night';
+          } else {
+            // 하위호환: 기존 객체 형태
+            els.to.value = data.t || "";
+            els.message.value = data.m || "";
+            els.from.value = data.f || "";
+            els.theme.value = typeof data.th === 'number' 
+              ? (data.th === 1 ? 'dawn' : data.th === 2 ? 'mint' : 'night')
+              : (data.th || "night");
+          }
+          
           renderPreview();
           enterShareMode();
           return true;
@@ -396,8 +427,26 @@
         els.theme.addEventListener(evt, renderPreview);
       });
 
-      els.make.addEventListener("click", () => {
-        makeLink();
+      els.make.addEventListener("click", async () => {
+        const fullUrl = makeLink();
+        els.link.textContent = "단축 URL 생성 중...";
+        
+        try {
+          const response = await fetch('/api/shorten', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: fullUrl })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            els.link.textContent = data.shortUrl;
+          } else {
+            els.link.textContent = fullUrl + " (단축 실패)";
+          }
+        } catch (error) {
+          els.link.textContent = fullUrl + " (로컬모드)";
+        }
       });
 
       els.copy.addEventListener("click", async () => {
