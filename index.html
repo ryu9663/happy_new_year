@@ -63,6 +63,30 @@
         backdrop-filter: blur(10px);
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
         overflow: hidden;
+        height: 700px;
+        display: flex;
+        flex-direction: column;
+      }
+      .card-content {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+        padding-right: 20px;
+        margin-right: -20px;
+      }
+      .card-content::-webkit-scrollbar {
+        width: 6px;
+      }
+      .card-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+      .card-content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+      .card-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
       }
       .sparkle {
         position: absolute;
@@ -189,8 +213,8 @@
         grid-template-columns: 1fr;
       }
       body.share #preview.card {
-        width: min(920px, calc(100% - 32px));
-        padding: 34px 26px;
+        width: 482px;
+        padding: 28px 24px;
       }
       .shareFooter {
         display: none;
@@ -228,10 +252,9 @@
         <div class="card" id="editor">
           <div class="sparkle"></div>
           <h1>Happy New Year ✨</h1>
-          <p class="hint">메시지 입력 → 링크 생성 → 공유</p>
 
           <label>To</label>
-          <input id="to" placeholder="김말이" maxlength="40" />
+          <input id="to" placeholder="김말이" />
 
           <label>Message</label>
           <textarea
@@ -240,7 +263,7 @@
           ></textarea>
 
           <label>From</label>
-          <input id="from" placeholder="만두" maxlength="40" />
+          <input id="from" placeholder="만두" />
 
           <label>Theme</label>
           <select id="theme">
@@ -263,9 +286,11 @@
 
         <div class="card" id="preview">
           <div class="sparkle"></div>
-          <h1 id="pvTitle">Happy New Year ✨</h1>
-          <p class="msg" id="pvMsg">메시지를 입력하면 여기서 미리보기 돼.</p>
-          <div class="sig" id="pvSig"></div>
+          <div class="card-content">
+            <h1 id="pvTitle">Happy New Year ✨</h1>
+            <p class="msg" id="pvMsg">메시지를 입력하면 여기서 미리보기 돼.</p>
+            <div class="sig" id="pvSig"></div>
+          </div>
         </div>
       </div>
 
@@ -352,29 +377,29 @@
       }
 
       function makeLink() {
-        const to = els.to.value.trim().slice(0, 40);
-        const msg = els.message.value.trim().slice(0, 700);
-        const from = els.from.value.trim().slice(0, 40);
+        const to = els.to.value.trim();
+        const msg = els.message.value.trim();
+        const from = els.from.value.trim();
         const theme = els.theme.value;
-        
+
         // 배열 형태로 더 압축: [to, msg, from, theme번호]
         const data = [];
-        if (to || msg || from || theme !== 'night') {
-          data[0] = to || '';
-          data[1] = msg || '';
-          data[2] = from || '';
-          if (theme !== 'night') {
-            data[3] = theme === 'dawn' ? 1 : 2;
+        if (to || msg || from || theme !== "night") {
+          data[0] = to || "";
+          data[1] = msg || "";
+          data[2] = from || "";
+          if (theme !== "night") {
+            data[3] = theme === "dawn" ? 1 : 2;
           }
         }
-        
+
         // 빈 배열이면 기본 페이지
         if (data.length === 0) {
           const url = location.origin + location.pathname;
           els.link.textContent = url;
           return url;
         }
-        
+
         const encoded = toCompressedUrl(JSON.stringify(data));
         const url = location.origin + location.pathname + "#" + encoded;
         els.link.textContent = url;
@@ -389,26 +414,32 @@
       function loadFromHash() {
         const hash = location.hash.replace(/^#/, "");
         if (!hash) return false;
-        
+
         try {
           const data = JSON.parse(fromCompressedUrl(hash));
-          
+
           // 배열 형태 처리: [to, msg, from, theme번호]
           if (Array.isArray(data)) {
             els.to.value = data[0] || "";
             els.message.value = data[1] || "";
             els.from.value = data[2] || "";
-            els.theme.value = data[3] === 1 ? 'dawn' : data[3] === 2 ? 'mint' : 'night';
+            els.theme.value =
+              data[3] === 1 ? "dawn" : data[3] === 2 ? "mint" : "night";
           } else {
             // 하위호환: 기존 객체 형태
             els.to.value = data.t || "";
             els.message.value = data.m || "";
             els.from.value = data.f || "";
-            els.theme.value = typeof data.th === 'number' 
-              ? (data.th === 1 ? 'dawn' : data.th === 2 ? 'mint' : 'night')
-              : (data.th || "night");
+            els.theme.value =
+              typeof data.th === "number"
+                ? data.th === 1
+                  ? "dawn"
+                  : data.th === 2
+                  ? "mint"
+                  : "night"
+                : data.th || "night";
           }
-          
+
           renderPreview();
           enterShareMode();
           return true;
@@ -429,14 +460,14 @@
       els.make.addEventListener("click", async () => {
         const fullUrl = makeLink();
         els.link.textContent = "단축 URL 생성 중...";
-        
+
         try {
-          const response = await fetch('/api/shorten', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: fullUrl })
+          const response = await fetch("/api/shorten", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: fullUrl }),
           });
-          
+
           if (response.ok) {
             const data = await response.json();
             els.link.textContent = data.shortUrl;

@@ -57,3 +57,4 @@ This is a simple New Year card generator web application built with vanilla HTML
 - CSS: Custom properties for theming, mobile-first responsive design
 - JavaScript: Modular functions for encoding/decoding, theme management, DOM manipulation, and canvas animation
 - No external libraries or frameworks used
+- <div class='card' id='preview'>..</div> 를 카드ui라고 칭할거야
