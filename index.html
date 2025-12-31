@@ -237,6 +237,9 @@
         border: 1px solid rgba(255, 255, 255, 0.18);
         font-weight: 800;
       }
+      button.hidden {
+        display: none;
+      }
       .hint {
         font-size: 13px;
         color: rgba(255, 255, 255, 0.65);
@@ -359,8 +362,7 @@
 
           <div class="btns" style="margin-top: 12px">
             <button id="make">공유 링크 만들기</button>
-            <button class="secondary" id="copy">링크 복사</button>
-            <button class="secondary" id="reset">초기화</button>
+            <button class="secondary hidden" id="copy">링크 복사</button>
           </div>
 
           <div style="margin-top: 12px">
@@ -407,7 +409,6 @@
         theme: document.getElementById("theme"),
         make: document.getElementById("make"),
         copy: document.getElementById("copy"),
-        reset: document.getElementById("reset"),
         link: document.getElementById("link"),
         pvTitle: document.getElementById("pvTitle"),
         pvMsg: document.getElementById("pvMsg"),
@@ -581,11 +582,17 @@
           if (response.ok) {
             const data = await response.json();
             els.link.textContent = data.shortUrl;
+            // 링크 생성 성공 후 복사 버튼 보이기
+            els.copy.classList.remove("hidden");
           } else {
             els.link.textContent = fullUrl + " (단축 실패)";
+            // 단축 실패해도 원본 URL이 있으니 복사 버튼 보이기
+            els.copy.classList.remove("hidden");
           }
         } catch (error) {
           els.link.textContent = fullUrl + " (로컬모드)";
+          // 로컬 모드에서도 원본 URL이 있으니 복사 버튼 보이기
+          els.copy.classList.remove("hidden");
         }
       });
 
@@ -609,16 +616,6 @@
         }
       });
 
-      els.reset.addEventListener("click", () => {
-        history.replaceState(null, "", location.pathname);
-        document.body.classList.remove("share");
-        els.to.value = "";
-        els.message.value = "";
-        els.from.value = "";
-        els.theme.value = "night";
-        els.link.textContent = "(아직 없음)";
-        renderPreview();
-      });
 
       // If user edits after hash load (share mode), keep share mode unless they reset
       window.addEventListener("hashchange", () => {
