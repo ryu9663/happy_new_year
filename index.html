@@ -242,10 +242,35 @@
       a.makeMine:hover {
         background: rgba(255, 255, 255, 0.18);
       }
+
+      /* 토스트 */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: rgba(34, 197, 94, 0.95);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.3s ease;
+        pointer-events: none;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
     </style>
   </head>
   <body>
     <canvas id="snow"></canvas>
+    <div id="toast" class="toast">링크가 복사되었습니다! ✅</div>
 
     <div class="wrap">
       <div class="row">
@@ -328,7 +353,17 @@
         pvMsg: document.getElementById("pvMsg"),
         pvSig: document.getElementById("pvSig"),
         makeMine: document.getElementById("makeMine"),
+        toast: document.getElementById("toast"),
       };
+
+      function showToast(message = "링크가 복사되었습니다! ✅") {
+        els.toast.textContent = message;
+        els.toast.classList.add("show");
+
+        setTimeout(() => {
+          els.toast.classList.remove("show");
+        }, 2000);
+      }
 
       const themes = {
         night: {
@@ -486,9 +521,10 @@
             : makeLink();
         try {
           await navigator.clipboard.writeText(url);
-          els.link.textContent = url + " ✅ 복사됨";
+          showToast("링크가 복사되었습니다!");
+          // 기존 텍스트는 변경하지 않고 토스트만 표시
         } catch {
-          els.link.textContent = url + " (복사 실패: 수동 복사)";
+          showToast("복사 실패: 수동으로 복사해주세요 ❌");
         }
       });
 
