@@ -4,6 +4,65 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Happy New Year Card</title>
+
+    <!-- Open Graph / SNS 메타 태그 -->
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="Happy New Year Card - 신년 카드 만들기"
+    />
+    <meta
+      property="og:description"
+      content="2026년 새해를 맞아 특별한 신년 카드를 만들어 소중한 사람들과 공유해보세요. 간편하게 카드를 만들고 링크로 공유할 수 있습니다."
+    />
+    <meta property="og:image" content="/og-image.png" />
+    <meta
+      property="og:url"
+      content="https://happy-new-year-eosin-omega.vercel.app"
+    />
+    <meta property="og:site_name" content="Happy New Year Card" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Happy New Year Card - 신년 카드 만들기"
+    />
+    <meta
+      name="twitter:description"
+      content="2026년 새해를 맞아 특별한 신년 카드를 만들어 소중한 사람들과 공유해보세요."
+    />
+    <meta name="twitter:image" content="/og-image.png" />
+
+    <!-- 일반 메타 태그 -->
+    <meta
+      name="description"
+      content="2026년 새해를 맞아 특별한 신년 카드를 만들어 소중한 사람들과 공유해보세요. 간편하게 카드를 만들고 링크로 공유할 수 있습니다."
+    />
+    <meta
+      name="keywords"
+      content="신년카드, 새해인사, 2026, 카드만들기, 새해복"
+    />
+
+    <!-- 파비콘 -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>"
+    />
+
+    <!-- Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-C2DMEWS27V"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-C2DMEWS27V");
+    </script>
     <style>
       :root {
         --bg1: #0f172a;
@@ -478,6 +537,14 @@
 
           renderPreview();
           enterShareMode();
+
+          // GA 이벤트 추적 - 공유 카드 조회
+          if (typeof gtag !== "undefined") {
+            gtag("event", "view_shared_card", {
+              event_category: "engagement",
+            });
+          }
+
           return true;
         } catch (e) {
           // 해시가 깨졌으면 공유모드로 안 들어감
@@ -496,6 +563,13 @@
       els.make.addEventListener("click", async () => {
         const fullUrl = makeLink();
         els.link.textContent = "단축 URL 생성 중...";
+
+        // GA 이벤트 추적
+        if (typeof gtag !== "undefined") {
+          gtag("event", "create_card", {
+            event_category: "engagement",
+          });
+        }
 
         try {
           const response = await fetch("/api/shorten", {
@@ -523,7 +597,13 @@
         try {
           await navigator.clipboard.writeText(url);
           showToast("링크가 복사되었습니다!");
-          // 기존 텍스트는 변경하지 않고 토스트만 표시
+
+          // GA 이벤트 추적
+          if (typeof gtag !== "undefined") {
+            gtag("event", "copy_link", {
+              event_category: "engagement",
+            });
+          }
         } catch {
           showToast("복사 실패: 수동으로 복사해주세요 ❌");
         }
