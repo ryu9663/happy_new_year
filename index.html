@@ -275,7 +275,9 @@
         grid-template-columns: 1fr;
       }
       body.share #preview.card {
-        width: 482px;
+        margin: 0 auto;
+        width: 95%;
+        max-width: 600px;
         height: fit-content;
         padding: 28px 24px;
       }
@@ -615,7 +617,6 @@
           showToast("복사 실패: 수동으로 복사해주세요 ❌");
         }
       });
-
 
       // If user edits after hash load (share mode), keep share mode unless they reset
       window.addEventListener("hashchange", () => {
